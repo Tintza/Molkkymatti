@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mölkkymatti 2</title>
+    <title>Mölkkymatti</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -83,7 +83,6 @@
             display: flex;
             align-items: center;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
         select, input, button {
             padding: 10px;
@@ -99,13 +98,6 @@
         }
         button:hover {
             background-color: #228B22;
-        }
-        #voice-button {
-            background-color: #FF4500; /* Oranssi äänipainikkeelle */
-            color: white;
-        }
-        #voice-button:hover {
-            background-color: #D2691E;
         }
         #history {
             margin-top: 20px;
@@ -186,7 +178,7 @@
     </style>
 </head>
 <body>
-    <h1>Mölkkymatti 2</h1>
+    <h1>Mölkkymatti</h1>
     <div class="container">
         <div id="add-player">
             <input type="text" id="player-name" placeholder="Pelaajan nimi">
@@ -211,7 +203,6 @@
                 <option value="12">12</option>
             </select>
             <button onclick="addScore()">Lisää pisteet</button>
-            <button onclick="startVoiceRecognition()" id="voice-button">Äänisyöttö</button>
             <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
         </div>
         <div id="history"></div>
@@ -414,6 +405,7 @@
                 alert('Pisteet oltava 0-12!');
                 return;
             }
+            isUndoAvailable = false; // Disable undo for previous, as new throw is added
             players[currentTurn].addPoints(points);
             lastThrownTurn = currentTurn;
             isUndoAvailable = true;
@@ -421,60 +413,6 @@
             checkEndGame();
             saveState();
             if (!gameOver) nextTurn();
-        }
-
-        function startVoiceRecognition() {
-            if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-                alert('Äänentunnistus ei ole tuettu tässä selaimessa.');
-                return;
-            }
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'fi-FI';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = () => {
-                alert('Kuuntelu käynnissä... Sano pisteet (0-12).');
-            };
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript.trim().toLowerCase();
-                const numberWords = {
-                    'nolla': 0,
-                    'yksi': 1,
-                    'kaksi': 2,
-                    'kolme': 3,
-                    'neljä': 4,
-                    'viisi': 5,
-                    'kuusi': 6,
-                    'seitsemän': 7,
-                    'kahdeksan': 8,
-                    'yhdeksän': 9,
-                    'kymmenen': 10,
-                    'yksitoista': 11,
-                    'kaksitoista': 12
-                };
-                let points = parseInt(transcript);
-                if (isNaN(points)) {
-                    points = numberWords[transcript] !== undefined ? numberWords[transcript] : -1;
-                }
-                if (points >= 0 && points <= 12) {
-                    document.getElementById('points').value = points;
-                    addScore();
-                } else {
-                    alert('Ei tunnistettu pisteitä (0-12). Yritä uudelleen.');
-                }
-            };
-
-            recognition.onerror = (event) => {
-                alert('Virhe äänentunnistuksessa: ' + event.error);
-            };
-
-            recognition.onend = () => {
-                // Lopetus
-            };
-
-            recognition.start();
         }
 
         function nextTurn() {
@@ -556,7 +494,8 @@
                 currentTurn: currentTurn,
                 gameOver: gameOver,
                 rankCounter: rankCounter,
-                lastThrownTurn: lastThrownTurn
+                lastThrownTurn: lastThrownTurn,
+                isUndoAvailable: isUndoAvailable
             };
             localStorage.setItem('molkymattiState', JSON.stringify(state));
         }
@@ -579,6 +518,7 @@
                 gameOver = state.gameOver;
                 rankCounter = state.rankCounter;
                 lastThrownTurn = state.lastThrownTurn || -1;
+                isUndoAvailable = state.isUndoAvailable || false;
                 if (players.length > 0) {
                     document.getElementById('score-input').style.display = 'flex';
                     if (!gameOver) {
@@ -586,8 +526,7 @@
                     }
                     setCurrentTurn(currentTurn);
                 }
-                isUndoAvailable = false;
-                document.getElementById('undo-button').disabled = true;
+                document.getElementById('undo-button').disabled = !isUndoAvailable;
                 renderPlayers();
             }
         }
