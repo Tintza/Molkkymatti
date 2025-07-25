@@ -51,7 +51,7 @@
         .player.finished {
             background-color: #FFD700; /* Kultainen, valmis (sijoitus) */
             font-weight: bold;
-            color: #000; /* Tumma teksti keltaisella pohjalla paremman kontrastin vuoksi */
+            color: #333; /* Tumma teksti keltaisella pohjalla paremman kontrastin vuoksi */
         }
         .player-info {
             display: flex;
@@ -61,7 +61,7 @@
             font-weight: bold;
             margin-bottom: 5px; /* Väliä historiaan */
         }
-        .misses {
+        .nollat {
             font-weight: normal; /* Ei lihavointia nollille */
         }
         .player-history {
@@ -167,9 +167,10 @@
             color: white;
             text-decoration: none;
         }
-        #rules-button, #guide-button {
+        #rules-button {
             position: absolute;
             bottom: 20px;
+            right: 20px;
             background-color: #32CD32;
             color: white;
             padding: 10px 15px;
@@ -177,13 +178,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #rules-button {
-            right: 20px;
-        }
-        #guide-button {
-            right: 150px; /* Sijoita vasemmalle säännöistä */
-        }
-        #rules-button:hover, #guide-button:hover {
+        #rules-button:hover {
             background-color: #228B22;
         }
         pre {
@@ -231,10 +226,9 @@
         <div id="history"></div>
         <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
         <button id="rules-button" onclick="openModal()">Pelin säännöt</button>
-        <button id="guide-button" onclick="openGuideModal()">Mölkkymatin ohjeet</button>
     </div>
 
-    <!-- Sääntömodal -->
+    <!-- Modal -->
     <div id="rules-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">×</span>
@@ -255,26 +249,6 @@
                 <li>Virallisesti peli päättyy, kun ensimmäinen pelaaja saa tasan 50 pistettä, mutta Mölkkymattia voi käyttää myös pistelaskutavalla, jossa peli jatkuu, kunnes kaikki pelaajat paitsi viimeinen ovat saavuttaneet 50 pistettä. Jokainen, joka saa tasan 50, saa sijan (1., 2. jne.), ja viimeinen jäljellä oleva pelaaja saa viimeisen sijan automaattisesti.</li>
                 <li>Jos pelaaja ylittää 50 pistettä, hänen pistemääränsä vähenee 25 pisteeseen.</li>
                 <li>Jos pelaaja epäonnistuu kolmesti peräkkäin (ei kaada keiloja), hänen pelinsä päättyy.</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Ohje-modal -->
-    <div id="guide-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeGuideModal()">×</span>
-            <h2>Mölkkymatin ohjeet</h2>
-            <ul>
-                <li>Lisää pelaajat syöttämällä nimi ja painamalla "Lisää pelaaja".</li>
-                <li>Pelin alkaessa näet pelaajien listan. Vuorossa oleva pelaaja on korostettu kultaisella reunuksella.</li>
-                <li>Syötä heiton pisteet (0-12) valikosta ja paina "Lisää pisteet". Sovellus laskee pisteet automaattisesti (50 voittaa, yli 50 pudottaa 25:een, 3 nollaa peräkkäin pudottaa ulos).</li>
-                <li>"Peruuta viimeinen" peruuttaa vain viimeisimmän heiton (vahvistuksella).</li>
-                <li>Pelaajien järjestystä voi muuttaa vetämällä (drag-and-drop) ennen ensimmäistä heittoa tai uuden kierroksen alussa.</li>
-                <li>"Poista pelaaja" (X-painike) poistaa pelaajan listalta (vahvistuksella).</li>
-                <li>Peli jatkuu sijoituksilla, kunnes viimeinen pelaaja jäljellä (tai kaikki 50 pistettä).</li>
-                <li>"Aloita alusta" nollaa pisteet ja historian, mutta pitää pelaajat listalla.</li>
-                <li>Tila tallentuu automaattisesti localStorageen, joten sivun päivittäminen säilyttää pelin.</li>
-                <li>"Pelin säännöt" avaa mölkyn säännöt, "Mölkkymatin ohjeet" nämä ohjeet.</li>
             </ul>
         </div>
     </div>
@@ -405,25 +379,69 @@
                 if (p.out) div.classList.add('out');
                 if (p.finished) div.classList.add('finished');
                 div.innerHTML = `<div class="player-info">
-                                    <span>${p.name}: ${p.score} pistettä <span class="misses">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
-                                    <button class="remove-player" onclick="removePlayer(${i})">X First, the user wants changes to the original Mölkkymatti, not the voice version. So, base it on the previous code without voice input.
+                                    <span>${p.name}: ${p.score} pistettä <span class="nollat">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+                                    <button class="remove-player" onclick="removePlayer(${i})">X</button>
+                                 </div>
+                                 <div class="player Ensinnäkin käyttäjä antaa uuden koodin, joka on vanhempi versio Mölkkymatista, ja pyytää muutoksia siihen.
 
-Changes:
-1. For the (nollat: 0) part in player-info, remove bold from it to distinguish from name and score.
+Muutokset:
+1. (nollat: 0) -kohta ilman lihavointia, jotta erottuu nimestä ja pisteistä.
 
-2. When game is over, players with yellow background (finished) have white text, which doesn't contrast well. Change text to darker color.
+2. Kun peli on loppunut (finished), keltaisella pohjalla oleva teksti tummemmalle, koska valkoinen ei erotu hyvin.
 
-3. Rearrange the score-input section: Upper row: "Heittovuorossa (pelaajan nimi)" and the points select. Lower row: "Lisää pisteet" and "Peruuta viimeinen" buttons.
+3. Alaosan rivi tiivis: Muuta "Vuoro: pelaajannimi" ylemmälle riville "Heittovuorossa (pelaajan nimi)" ja pistevalitsin siihen. Alemmalle riville painikkeet "Lisää pisteet" ja "Peruuta viimeinen".
 
-4. Add a new button at the bottom, "Mölkkymatin ohjeet", which opens a popup similar to rules, with clear instructions on how to use Mölkkymatti.
+Käyttäjä ei maininnut uutta painiketta "Mölkkymatin ohjeet", vaikka aikaisemmassa viestissä se oli, mutta tässä viestissä se puuttuu, joten ehkä se oli edellisessä.
 
-I need to update the HTML, CSS, and JS accordingly.
+Koodi on vanha versio, joten päivitän sitä näillä muutoksilla.
 
-For the new popup: Create another modal for instructions, with content explaining the app's features.
+CSS-muutokset:
+- .player-finished { color: #333; } tms. tumma teksti.
 
-No tools needed here, as it's code modification.
+- (nollat): Käytä span-luokkaa ilman boldia.
 
-Final response: Provide the updated code.```html
+HTML/JS:
+- Muuta score-input flex-direction: column; lisää divit riville.
+
+- Päivitä innerHTML player-info:ssa span player-misses luokalla.
+
+- Lisää id:t modalille jne. jos tarvis.
+
+Käyttäjä antoi koodin ilman "Mölkkymatin ohjeet" -painiketta, joten lisään sen, koska aikaisempi viesti pyysi sitä.
+
+Viimeisessä viestissä se on mainittu, mutta käyttäjä sanoi "Tehdään tähän Mölkkymattiin vielä pari muutosta", ja listasi 3, mutta aiemmassa oli 4, mutta ehkä unohdus.
+
+Viimeinen viesti listaa 3 muutosta, joten teen ne.
+
+Käyttäjä sanoi "Tehdään tähän Mölkkymattiin vielä pari muutosta", mutta listaa 3.
+
+Ei mainitse "Mölkkymatin ohjeet", joten ehkä ei.
+
+Aiemmassa viestissä se oli, mutta nyt uusi koodi ilman sitä, joten teen pyydetyt.
+
+Päivitä koodi.
+
+Player-info innerHTML: <span>${p.name}: ${p.score} pistettä <span class="player-misses">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+
+CSS: .player-misses { font-weight: normal; }
+
+Finished: .player.finished { color: #333; }
+
+Score-input: 
+<div class="score-input" id="score-input" style="display:none;">
+    <div class="turn-row">
+        <span id="current-player">Heittovuorossa: </span>
+        <select id="points">...</select>
+    </div>
+    <div class="button-row">
+        <button onclick="addScore()">Lisää pisteet</button>
+        <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
+    </div>
+</div>
+
+CSS for turn-row and button-row: display: flex; align-items: center; margin-bottom: 10px for turn-row.
+
+SetCurrentTurn: <span id="current-player">Heittovuorossa: <strong>${players[currentTurn].name}</strong></span>```html
 <!DOCTYPE html>
 <html lang="fi">
 <head>
@@ -476,7 +494,8 @@ Final response: Provide the updated code.```html
         }
         .player.finished {
             background-color: #FFD700; /* Kultainen, valmis (sijoitus) */
-            color: #333; /* Tummempi teksti keltaiselle pohjalle */
+            font-weight: bold;
+            color: #333; /* Tumma teksti keltaiselle pohjalle */
         }
         .player-info {
             display: flex;
@@ -589,7 +608,7 @@ Final response: Provide the updated code.```html
             color: white;
             text-decoration: none;
         }
-        #rules-button, #instructions-button {
+        #rules-button {
             position: absolute;
             bottom: 20px;
             right: 20px;
@@ -600,10 +619,7 @@ Final response: Provide the updated code.```html
             border-radius: 5px;
             cursor: pointer;
         }
-        #rules-button {
-            right: 150px; /* Siirrä vasemmalle, jotta mahtuu toinen painike */
-        }
-        #rules-button:hover, #instructions-button:hover {
+        #rules-button:hover {
             background-color: #228B22;
         }
         pre {
@@ -650,14 +666,13 @@ Final response: Provide the updated code.```html
         </div>
         <div id="history"></div>
         <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
-        <button id="rules-button" onclick="openRulesModal()">Pelin säännöt</button>
-        <button id="instructions-button" onclick="openInstructionsModal()">Mölkkymatin ohjeet</button>
+        <button id="rules-button" onclick="openModal()">Pelin säännöt</button>
     </div>
 
-    <!-- Säännöt Modal -->
+    <!-- Modal -->
     <div id="rules-modal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('rules-modal')">×</span>
+            <span class="close" onclick="closeModal()">×</span>
             <h2>Mölkky-pelin säännöt</h2>
             <ul>
                 <li>Järjestä numeroidut keilat tiiviiksi ryhmäksi 3,5 metrin päähän heittopaikasta seuraavassa järjestyksessä (rivit edestä taaksepäin, heittolinjaan nähden):<br>
@@ -675,26 +690,6 @@ Final response: Provide the updated code.```html
                 <li>Virallisesti peli päättyy, kun ensimmäinen pelaaja saa tasan 50 pistettä, mutta Mölkkymattia voi käyttää myös pistelaskutavalla, jossa peli jatkuu, kunnes kaikki pelaajat paitsi viimeinen ovat saavuttaneet 50 pistettä. Jokainen, joka saa tasan 50, saa sijan (1., 2. jne.), ja viimeinen jäljellä oleva pelaaja saa viimeisen sijan automaattisesti.</li>
                 <li>Jos pelaaja ylittää 50 pistettä, hänen pistemääränsä vähenee 25 pisteeseen.</li>
                 <li>Jos pelaaja epäonnistuu kolmesti peräkkäin (ei kaada keiloja), hänen pelinsä päättyy.</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Ohjeet Modal -->
-    <div id="instructions-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('instructions-modal')">×</span>
-            <h2>Mölkkymatin ohjeet</h2>
-            <p>Tervetuloa Mölkkymattiin! Tämä on yksinkertainen web-pohjainen sovellus Mölkky-pelin pisteiden seurantaan. Seuraavassa on käyttöohjeet:</p>
-            <ul>
-                <li><strong>Pelaajien lisääminen:</strong> Kirjoita pelaajan nimi kenttään ja paina "Lisää pelaaja". Voit lisätä niin monta pelaajaa kuin haluat. Samannimistä pelaajaa ei voi lisätä.</li>
-                <li><strong>Pisteiden syöttö:</strong> Valitse pisteet (0-12) dropdown-valikosta ja paina "Lisää pisteet". Sovellus seuraa sääntöjä: tasan 50 voittaa sijan, yli 50 pudottaa 25 pisteeseen, kolme peräkkäistä nollaa pudottaa pelaajan.</li>
-                <li><strong>Peruuta viimeinen:</strong> Peruuttaa vain viimeisimmän heiton (vahvistuksella). Ei käytettävissä sivun päivityksen jälkeen tai vuoron vaihdon jälkeen.</li>
-                <li><strong>Pelaajien järjestys:</strong> Uuden kierroksen alussa (kun historia on tyhjä), voit järjestää pelaajat raahaamalla (drag and drop).</li>
-                <li><strong>Poista pelaaja:</strong> Paina "X" pelaajan kortissa (vahvistuksella).</li>
-                <li><strong>Aloita alusta:</strong> Nollaa pisteet ja historiat, mutta säilyttää pelaajat.</li>
-                <li><strong>Tallennus:</strong> Tila tallennetaan automaattisesti localStorageen, joten sivun päivitys säilyttää edistymisen. Päivitys siirtää vuoron seuraavalle.</li>
-                <li><strong>Pelin loppu:</strong> Peli jatkuu, kunnes kaikki paitsi yksi ovat saaneet 50 pistettä tai pudonneet. Sijoitukset annetaan järjestyksessä.</li>
-                <li><strong>Pelin säännöt:</strong> Paina nappia nähdäksesi Mölkky-säännöt.</li>
             </ul>
         </div>
     </div>
@@ -825,9 +820,7 @@ Final response: Provide the updated code.```html
                 if (p.out) div.classList.add('out');
                 if (p.finished) div.classList.add('finished');
                 div.innerHTML = `<div class="player-info">
-                                    <span>${p.name}: ${p.score} pistettä</span>
-                                    <span class="player-misses">(nollat: ${p.consecutiveMisses})</span>
-                                    <span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+                                    <span>${p.name}: ${p.score} pistettä <span class="player-misses">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
                                     <button class="remove-player" onclick="removePlayer(${i})">X</button>
                                  </div>
                                  <div class="player-history">Historia: ${p.history.join(', ')}</div>`;
@@ -836,6 +829,7 @@ Final response: Provide the updated code.```html
             if (reorderable) {
                 addDragAndDropListeners();
             }
+            document.getElementById('undo-button').disabled = !isUndoAvailable;
         }
 
         function addDragAndDropListeners() {
@@ -870,6 +864,7 @@ Final response: Provide the updated code.```html
                 alert('Pisteet oltava 0-12!');
                 return;
             }
+            isUndoAvailable = false; // Disable undo for previous, as new throw is added
             players[currentTurn].addPoints(points);
             lastThrownTurn = currentTurn;
             isUndoAvailable = true;
@@ -881,7 +876,6 @@ Final response: Provide the updated code.```html
 
         function nextTurn() {
             if (gameOver) return;
-            isUndoAvailable = false;
             let attempts = 0;
             do {
                 currentTurn = (currentTurn + 1) % players.length;
@@ -908,7 +902,7 @@ Final response: Provide the updated code.```html
                 if (activePlayers === 1) {
                     const lastPlayer = players.find(p => !p.out && !p.finished);
                     lastPlayer.finished = true;
-                    lastPlayer.rank =rankCounter++;
+                    lastPlayer.rank = rankCounter++;
                     alert(`${lastPlayer.name} sijoittuu ${lastPlayer.rank}. sijalle (viimeisenä jäljellä olevana).`);
                     renderPlayers();
                 }
@@ -999,22 +993,20 @@ Final response: Provide the updated code.```html
         window.onload = loadState;
 
         // Modal-funktiot
-        function openModal(id) {
-            document.getElementById(id).style.display = 'block';
+        function openModal() {
+            document.getElementById('rules-modal').style.display = 'block';
         }
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+        function closeModal() {
+            document.getElementById('rules-modal').style.display = 'none';
         }
 
         // Sulje modal klikkaamalla ulkopuolelle
         window.onclick = function(event) {
-            const modals = [document.getElementById('rules-modal'), document.getElementById('instructions-modal')];
-            modals.forEach(modal => {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
-            });
+            const modal = document.getElementById('rules-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
         }
     </script>
 </body>
