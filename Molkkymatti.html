@@ -81,18 +81,8 @@
         }
         .score-input {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 20px;
-        }
-        .turn-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .button-row {
-            display: flex;
-            align-items: center;
         }
         select, input, button {
             padding: 10px;
@@ -196,28 +186,24 @@
         </div>
         <div class="player-list" id="player-list"></div>
         <div class="score-input" id="score-input" style="display:none;">
-            <div class="turn-row">
-                <span id="current-player">Heittovuorossa: </span>
-                <select id="points">
-                    <option value="0">0</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                </select>
-            </div>
-            <div class="button-row">
-                <button onclick="addScore()">Lisää pisteet</button>
-                <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
-            </div>
+            <span id="current-player">Vuoro: </span>
+            <select id="points">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+            </select>
+            <button onclick="addScore()">Lisää pisteet</button>
+            <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
         </div>
         <div id="history"></div>
         <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
@@ -375,7 +361,7 @@
                 if (p.out) div.classList.add('out');
                 if (p.finished) div.classList.add('finished');
                 div.innerHTML = `<div class="player-info">
-                                    <span>${p.name}: ${p.score} pistettä <span class="nollat">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+                                    <span>${p.name}: ${p.score} pistettä (nollat: ${p.consecutiveMisses})${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
                                     <button class="remove-player" onclick="removePlayer(${i})">X</button>
                                  </div>
                                  <div class="player-history">Historia: ${p.history.join(', ')}</div>`;
@@ -446,7 +432,7 @@
 
         function setCurrentTurn(turn) {
             currentTurn = turn;
-            document.getElementById('current-player').innerHTML = `Heittovuorossa: <strong>${players[currentTurn].name}</strong>`;
+            document.getElementById('current-player').innerHTML = `Vuoro: <strong>${players[currentTurn].name}</strong>`;
             renderPlayers();
         }
 
@@ -508,7 +494,8 @@
                 currentTurn: currentTurn,
                 gameOver: gameOver,
                 rankCounter: rankCounter,
-                lastThrownTurn: lastThrownTurn
+                lastThrownTurn: lastThrownTurn,
+                isUndoAvailable: isUndoAvailable
             };
             localStorage.setItem('molkymattiState', JSON.stringify(state));
         }
@@ -531,6 +518,7 @@
                 gameOver = state.gameOver;
                 rankCounter = state.rankCounter;
                 lastThrownTurn = state.lastThrownTurn || -1;
+                isUndoAvailable = state.isUndoAvailable || false;
                 if (players.length > 0) {
                     document.getElementById('score-input').style.display = 'flex';
                     if (!gameOver) {
@@ -538,8 +526,7 @@
                     }
                     setCurrentTurn(currentTurn);
                 }
-                isUndoAvailable = false;
-                document.getElementById('undo-button').disabled = true;
+                document.getElementById('undo-button').disabled = !isUndoAvailable;
                 renderPlayers();
             }
         }
