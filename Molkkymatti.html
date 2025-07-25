@@ -51,6 +51,7 @@
         .player.finished {
             background-color: #FFD700; /* Kultainen, valmis (sijoitus) */
             font-weight: bold;
+            color: #000; /* Tumma teksti keltaisella pohjalla paremman kontrastin vuoksi */
         }
         .player-info {
             display: flex;
@@ -59,6 +60,9 @@
             width: 100%;
             font-weight: bold;
             margin-bottom: 5px; /* Väliä historiaan */
+        }
+        .misses {
+            font-weight: normal; /* Ei lihavointia nollille */
         }
         .player-history {
             font-size: 0.9em; /* Hieman pienempi fontti historialle */
@@ -81,8 +85,18 @@
         }
         .score-input {
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
             margin-bottom: 20px;
+        }
+        .turn-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .buttons-row {
+            display: flex;
+            align-items: center;
         }
         select, input, button {
             padding: 10px;
@@ -153,10 +167,9 @@
             color: white;
             text-decoration: none;
         }
-        #rules-button {
+        #rules-button, #guide-button {
             position: absolute;
             bottom: 20px;
-            right: 20px;
             background-color: #32CD32;
             color: white;
             padding: 10px 15px;
@@ -164,7 +177,13 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #rules-button:hover {
+        #rules-button {
+            right: 20px;
+        }
+        #guide-button {
+            right: 150px; /* Sijoita vasemmalle säännöistä */
+        }
+        #rules-button:hover, #guide-button:hover {
             background-color: #228B22;
         }
         pre {
@@ -186,31 +205,36 @@
         </div>
         <div class="player-list" id="player-list"></div>
         <div class="score-input" id="score-input" style="display:none;">
-            <span id="current-player">Vuoro: </span>
-            <select id="points">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-            </select>
-            <button onclick="addScore()">Lisää pisteet</button>
-            <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
+            <div class="turn-row">
+                <span id="current-player">Heittovuorossa: </span>
+                <select id="points">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+            <div class="buttons-row">
+                <button onclick="addScore()">Lisää pisteet</button>
+                <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
+            </div>
         </div>
         <div id="history"></div>
         <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
         <button id="rules-button" onclick="openModal()">Pelin säännöt</button>
+        <button id="guide-button" onclick="openGuideModal()">Mölkkymatin ohjeet</button>
     </div>
 
-    <!-- Modal -->
+    <!-- Sääntömodal -->
     <div id="rules-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">×</span>
@@ -231,6 +255,26 @@
                 <li>Virallisesti peli päättyy, kun ensimmäinen pelaaja saa tasan 50 pistettä, mutta Mölkkymattia voi käyttää myös pistelaskutavalla, jossa peli jatkuu, kunnes kaikki pelaajat paitsi viimeinen ovat saavuttaneet 50 pistettä. Jokainen, joka saa tasan 50, saa sijan (1., 2. jne.), ja viimeinen jäljellä oleva pelaaja saa viimeisen sijan automaattisesti.</li>
                 <li>Jos pelaaja ylittää 50 pistettä, hänen pistemääränsä vähenee 25 pisteeseen.</li>
                 <li>Jos pelaaja epäonnistuu kolmesti peräkkäin (ei kaada keiloja), hänen pelinsä päättyy.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Ohje-modal -->
+    <div id="guide-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeGuideModal()">×</span>
+            <h2>Mölkkymatin ohjeet</h2>
+            <ul>
+                <li>Lisää pelaajat syöttämällä nimi ja painamalla "Lisää pelaaja".</li>
+                <li>Pelin alkaessa näet pelaajien listan. Vuorossa oleva pelaaja on korostettu kultaisella reunuksella.</li>
+                <li>Syötä heiton pisteet (0-12) valikosta ja paina "Lisää pisteet". Sovellus laskee pisteet automaattisesti (50 voittaa, yli 50 pudottaa 25:een, 3 nollaa peräkkäin pudottaa ulos).</li>
+                <li>"Peruuta viimeinen" peruuttaa vain viimeisimmän heiton (vahvistuksella).</li>
+                <li>Pelaajien järjestystä voi muuttaa vetämällä (drag-and-drop) ennen ensimmäistä heittoa tai uuden kierroksen alussa.</li>
+                <li>"Poista pelaaja" (X-painike) poistaa pelaajan listalta (vahvistuksella).</li>
+                <li>Peli jatkuu sijoituksilla, kunnes viimeinen pelaaja jäljellä (tai kaikki 50 pistettä).</li>
+                <li>"Aloita alusta" nollaa pisteet ja historian, mutta pitää pelaajat listalla.</li>
+                <li>Tila tallentuu automaattisesti localStorageen, joten sivun päivittäminen säilyttää pelin.</li>
+                <li>"Pelin säännöt" avaa mölkyn säännöt, "Mölkkymatin ohjeet" nämä ohjeet.</li>
             </ul>
         </div>
     </div>
@@ -361,7 +405,429 @@
                 if (p.out) div.classList.add('out');
                 if (p.finished) div.classList.add('finished');
                 div.innerHTML = `<div class="player-info">
-                                    <span>${p.name}: ${p.score} pistettä (nollat: ${p.consecutiveMisses})${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+                                    <span>${p.name}: ${p.score} pistettä <span class="misses">(nollat: ${p.consecutiveMisses})</span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
+                                    <button class="remove-player" onclick="removePlayer(${i})">X First, the user wants changes to the original Mölkkymatti, not the voice version. So, base it on the previous code without voice input.
+
+Changes:
+1. For the (nollat: 0) part in player-info, remove bold from it to distinguish from name and score.
+
+2. When game is over, players with yellow background (finished) have white text, which doesn't contrast well. Change text to darker color.
+
+3. Rearrange the score-input section: Upper row: "Heittovuorossa (pelaajan nimi)" and the points select. Lower row: "Lisää pisteet" and "Peruuta viimeinen" buttons.
+
+4. Add a new button at the bottom, "Mölkkymatin ohjeet", which opens a popup similar to rules, with clear instructions on how to use Mölkkymatti.
+
+I need to update the HTML, CSS, and JS accordingly.
+
+For the new popup: Create another modal for instructions, with content explaining the app's features.
+
+No tools needed here, as it's code modification.
+
+Final response: Provide the updated code.```html
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mölkkymatti</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #228B22; /* Metsänvihreä */
+            color: #FFF;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        .container {
+            position: relative; /* Lisätty modal-painikkeelle */
+            background-color: #8B4513; /* Puunruskea */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 800px;
+        }
+        .player-list {
+            margin-bottom: 20px;
+        }
+        .player {
+            background-color: #556B2F; /* Tummanvihreä */
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Vasen reuna */
+        }
+        .player.current {
+            border: 2px solid #FFD700; /* Kulta reunus currentille */
+        }
+        .player.out {
+            background-color: #A52A2A; /* Punainen, ulos */
+            text-decoration: line-through;
+        }
+        .player.finished {
+            background-color: #FFD700; /* Kultainen, valmis (sijoitus) */
+            color: #333; /* Tummempi teksti keltaiselle pohjalle */
+        }
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            font-weight: bold;
+            margin-bottom: 5px; /* Väliä historiaan */
+        }
+        .player-misses {
+            font-weight: normal; /* Ei lihavointia nollille */
+        }
+        .player-history {
+            font-size: 0.9em; /* Hieman pienempi fontti historialle */
+            word-wrap: break-word; /* Rivittää pitkät listat */
+        }
+        .remove-player {
+            background-color: #FF0000;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .remove-player:hover {
+            background-color: #CC0000;
+        }
+        .player[draggable="true"] {
+            cursor: move;
+        }
+        .score-input {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .turn-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .button-row {
+            display: flex;
+            align-items: center;
+        }
+        select, input, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+            font-size: 1em;
+        }
+        button {
+            background-color: #32CD32; /* Limevihreä */
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #228B22;
+        }
+        #history {
+            margin-top: 20px;
+            background-color: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #add-player {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #player-name {
+            flex-grow: 1;
+        }
+        /* Modal tyylit */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #556B2F; /* Tummanvihreä */
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            color: #FFF;
+            position: relative;
+        }
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: white;
+            text-decoration: none;
+        }
+        #rules-button, #instructions-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #32CD32;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #rules-button {
+            right: 150px; /* Siirrä vasemmalle, jotta mahtuu toinen painike */
+        }
+        #rules-button:hover, #instructions-button:hover {
+            background-color: #228B22;
+        }
+        pre {
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1em;
+            white-space: pre-wrap;
+            text-align: center; /* Keskitys diagrammille */
+        }
+    </style>
+</head>
+<body>
+    <h1>Mölkkymatti</h1>
+    <div class="container">
+        <div id="add-player">
+            <input type="text" id="player-name" placeholder="Pelaajan nimi">
+            <button onclick="addPlayer()">Lisää pelaaja</button>
+        </div>
+        <div class="player-list" id="player-list"></div>
+        <div class="score-input" id="score-input" style="display:none;">
+            <div class="turn-row">
+                <span id="current-player">Heittovuorossa: </span>
+                <select id="points">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+            <div class="button-row">
+                <button onclick="addScore()">Lisää pisteet</button>
+                <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
+            </div>
+        </div>
+        <div id="history"></div>
+        <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
+        <button id="rules-button" onclick="openRulesModal()">Pelin säännöt</button>
+        <button id="instructions-button" onclick="openInstructionsModal()">Mölkkymatin ohjeet</button>
+    </div>
+
+    <!-- Säännöt Modal -->
+    <div id="rules-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rules-modal')">×</span>
+            <h2>Mölkky-pelin säännöt</h2>
+            <ul>
+                <li>Järjestä numeroidut keilat tiiviiksi ryhmäksi 3,5 metrin päähän heittopaikasta seuraavassa järjestyksessä (rivit edestä taaksepäin, heittolinjaan nähden):<br>
+                    <pre>
+  7  9  8
+  5 11 12 6
+  3 10 4
+  1 2
+                    </pre>
+                </li>
+                <li>Pelaaja pyrkii kaatamaan numeroituja keiloja heittokeilalla.</li>
+                <li>Jos useita keiloja kaatuu, pelaajan pisteet ovat yhtä suuret kuin kaatuneiden keilojen määrä.</li>
+                <li>Yhden keilan kaataminen antaa sille merkityt pisteet.</li>
+                <li>Aseta kaatuneet keilat pystyyn sinne, minne ne putosivat, ja sitten on seuraavan pelaajan vuoro.</li>
+                <li>Virallisesti peli päättyy, kun ensimmäinen pelaaja saa tasan 50 pistettä, mutta Mölkkymattia voi käyttää myös pistelaskutavalla, jossa peli jatkuu, kunnes kaikki pelaajat paitsi viimeinen ovat saavuttaneet 50 pistettä. Jokainen, joka saa tasan 50, saa sijan (1., 2. jne.), ja viimeinen jäljellä oleva pelaaja saa viimeisen sijan automaattisesti.</li>
+                <li>Jos pelaaja ylittää 50 pistettä, hänen pistemääränsä vähenee 25 pisteeseen.</li>
+                <li>Jos pelaaja epäonnistuu kolmesti peräkkäin (ei kaada keiloja), hänen pelinsä päättyy.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Ohjeet Modal -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('instructions-modal')">×</span>
+            <h2>Mölkkymatin ohjeet</h2>
+            <p>Tervetuloa Mölkkymattiin! Tämä on yksinkertainen web-pohjainen sovellus Mölkky-pelin pisteiden seurantaan. Seuraavassa on käyttöohjeet:</p>
+            <ul>
+                <li><strong>Pelaajien lisääminen:</strong> Kirjoita pelaajan nimi kenttään ja paina "Lisää pelaaja". Voit lisätä niin monta pelaajaa kuin haluat. Samannimistä pelaajaa ei voi lisätä.</li>
+                <li><strong>Pisteiden syöttö:</strong> Valitse pisteet (0-12) dropdown-valikosta ja paina "Lisää pisteet". Sovellus seuraa sääntöjä: tasan 50 voittaa sijan, yli 50 pudottaa 25 pisteeseen, kolme peräkkäistä nollaa pudottaa pelaajan.</li>
+                <li><strong>Peruuta viimeinen:</strong> Peruuttaa vain viimeisimmän heiton (vahvistuksella). Ei käytettävissä sivun päivityksen jälkeen tai vuoron vaihdon jälkeen.</li>
+                <li><strong>Pelaajien järjestys:</strong> Uuden kierroksen alussa (kun historia on tyhjä), voit järjestää pelaajat raahaamalla (drag and drop).</li>
+                <li><strong>Poista pelaaja:</strong> Paina "X" pelaajan kortissa (vahvistuksella).</li>
+                <li><strong>Aloita alusta:</strong> Nollaa pisteet ja historiat, mutta säilyttää pelaajat.</li>
+                <li><strong>Tallennus:</strong> Tila tallennetaan automaattisesti localStorageen, joten sivun päivitys säilyttää edistymisen. Päivitys siirtää vuoron seuraavalle.</li>
+                <li><strong>Pelin loppu:</strong> Peli jatkuu, kunnes kaikki paitsi yksi ovat saaneet 50 pistettä tai pudonneet. Sijoitukset annetaan järjestyksessä.</li>
+                <li><strong>Pelin säännöt:</strong> Paina nappia nähdäksesi Mölkky-säännöt.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+        let currentTurn = 0;
+        let gameOver = false;
+        let rankCounter = 1;
+        let lastThrownTurn = -1;
+        let isUndoAvailable = false;
+
+        class Player {
+            constructor(name) {
+                this.name = name;
+                this.score = 0;
+                this.consecutiveMisses = 0;
+                this.history = [];
+                this.out = false;
+                this.finished = false;
+                this.rank = null;
+            }
+
+            addPoints(points) {
+                if (this.out || this.finished || gameOver) return;
+                this.history.push(points);
+                if (points === 0) {
+                    this.consecutiveMisses++;
+                    if (this.consecutiveMisses >= 3) {
+                        this.out = true;
+                        alert(`${this.name} on ulkona! Kolme peräkkäistä nollaa.`);
+                        return;
+                    }
+                } else {
+                    this.consecutiveMisses = 0;
+                }
+
+                let potential = this.score + points;
+                if (potential === 50) {
+                    this.score = 50;
+                    this.finished = true;
+                    this.rank = rankCounter++;
+                    alert(`${this.name} sijoittuu ${this.rank}. sijalle!`);
+                } else if (potential > 50) {
+                    this.score = 25;
+                    alert(`${this.name} ylitti 50! Pisteet pudotetaan 25:een.`);
+                } else {
+                    this.score = potential;
+                }
+            }
+
+            undoLast() {
+                if (this.history.length > 0) {
+                    const lastPoints = this.history.pop();
+                    this.score -= lastPoints;
+                    if (lastPoints === 0) {
+                        this.consecutiveMisses--;
+                    } else {
+                        this.consecutiveMisses = this.history.slice(-2).filter(p => p === 0).length;
+                    }
+                    if (this.finished) {
+                        this.finished = false;
+                        rankCounter--;
+                        this.rank = null;
+                    }
+                    this.out = false;
+                    gameOver = false;
+                }
+            }
+
+            reset() {
+                this.score = 0;
+                this.consecutiveMisses = 0;
+                this.history = [];
+                this.out = false;
+                this.finished = false;
+                this.rank = null;
+            }
+        }
+
+        function addPlayer() {
+            const name = document.getElementById('player-name').value.trim();
+            if (name) {
+                const exists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
+                if (exists) {
+                    alert('Pelaaja samalla nimellä on jo lisätty!');
+                    return;
+                }
+                players.push(new Player(name));
+                document.getElementById('player-name').value = '';
+                saveState();
+                renderPlayers();
+                if (players.length > 0) {
+                    document.getElementById('score-input').style.display = 'flex';
+                    setCurrentTurn(0);
+                }
+            }
+        }
+
+        function removePlayer(index) {
+            if (confirm(`Haluatko varmasti poistaa pelaajan ${players[index].name}?`)) {
+                players.splice(index, 1);
+                saveState();
+                if (players.length === 0) {
+                    document.getElementById('score-input').style.display = 'none';
+                } else if (currentTurn >= players.length) {
+                    currentTurn = 0;
+                }
+                renderPlayers();
+                setCurrentTurn(currentTurn);
+            }
+        }
+
+        function canReorder() {
+            return players.every(p => p.history.length === 0);
+        }
+
+        function renderPlayers() {
+            const list = document.getElementById('player-list');
+            list.innerHTML = '';
+            const reorderable = canReorder();
+            players.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'player';
+                div.draggable = reorderable;
+                div.dataset.index = i;
+                if (i === currentTurn && !p.finished && !p.out) div.classList.add('current');
+                if (p.out) div.classList.add('out');
+                if (p.finished) div.classList.add('finished');
+                div.innerHTML = `<div class="player-info">
+                                    <span>${p.name}: ${p.score} pistettä</span>
+                                    <span class="player-misses">(nollat: ${p.consecutiveMisses})</span>
+                                    <span>${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
                                     <button class="remove-player" onclick="removePlayer(${i})">X</button>
                                  </div>
                                  <div class="player-history">Historia: ${p.history.join(', ')}</div>`;
@@ -370,7 +836,6 @@
             if (reorderable) {
                 addDragAndDropListeners();
             }
-            document.getElementById('undo-button').disabled = !isUndoAvailable;
         }
 
         function addDragAndDropListeners() {
@@ -405,7 +870,6 @@
                 alert('Pisteet oltava 0-12!');
                 return;
             }
-            isUndoAvailable = false; // Disable undo for previous, as new throw is added
             players[currentTurn].addPoints(points);
             lastThrownTurn = currentTurn;
             isUndoAvailable = true;
@@ -417,6 +881,7 @@
 
         function nextTurn() {
             if (gameOver) return;
+            isUndoAvailable = false;
             let attempts = 0;
             do {
                 currentTurn = (currentTurn + 1) % players.length;
@@ -432,7 +897,7 @@
 
         function setCurrentTurn(turn) {
             currentTurn = turn;
-            document.getElementById('current-player').innerHTML = `Vuoro: <strong>${players[currentTurn].name}</strong>`;
+            document.getElementById('current-player').innerHTML = `Heittovuorossa: <strong>${players[currentTurn].name}</strong>`;
             renderPlayers();
         }
 
@@ -443,7 +908,7 @@
                 if (activePlayers === 1) {
                     const lastPlayer = players.find(p => !p.out && !p.finished);
                     lastPlayer.finished = true;
-                    lastPlayer.rank = rankCounter++;
+                    lastPlayer.rank =rankCounter++;
                     alert(`${lastPlayer.name} sijoittuu ${lastPlayer.rank}. sijalle (viimeisenä jäljellä olevana).`);
                     renderPlayers();
                 }
@@ -494,8 +959,7 @@
                 currentTurn: currentTurn,
                 gameOver: gameOver,
                 rankCounter: rankCounter,
-                lastThrownTurn: lastThrownTurn,
-                isUndoAvailable: isUndoAvailable
+                lastThrownTurn: lastThrownTurn
             };
             localStorage.setItem('molkymattiState', JSON.stringify(state));
         }
@@ -518,7 +982,6 @@
                 gameOver = state.gameOver;
                 rankCounter = state.rankCounter;
                 lastThrownTurn = state.lastThrownTurn || -1;
-                isUndoAvailable = state.isUndoAvailable || false;
                 if (players.length > 0) {
                     document.getElementById('score-input').style.display = 'flex';
                     if (!gameOver) {
@@ -526,7 +989,8 @@
                     }
                     setCurrentTurn(currentTurn);
                 }
-                document.getElementById('undo-button').disabled = !isUndoAvailable;
+                isUndoAvailable = false;
+                document.getElementById('undo-button').disabled = true;
                 renderPlayers();
             }
         }
@@ -535,20 +999,22 @@
         window.onload = loadState;
 
         // Modal-funktiot
-        function openModal() {
-            document.getElementById('rules-modal').style.display = 'block';
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
         }
 
-        function closeModal() {
-            document.getElementById('rules-modal').style.display = 'none';
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         // Sulje modal klikkaamalla ulkopuolelle
         window.onclick = function(event) {
-            const modal = document.getElementById('rules-modal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
+            const modals = [document.getElementById('rules-modal'), document.getElementById('instructions-modal')];
+            modals.forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>
