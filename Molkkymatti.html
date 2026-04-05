@@ -2,554 +2,951 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Mölkkymatti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #228B22; /* Metsänvihreä */
-            color: #FFF;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+        :root {
+            --bg:          #0e1c14;
+            --surface:     #172a1f;
+            --card:        #1f3829;
+            --card2:       #273f30;
+            --gold:        #e8a020;
+            --gold-glow:   rgba(232,160,32,0.35);
+            --green:       #52d46e;
+            --green-dim:   rgba(82,212,110,0.15);
+            --text:        #e4d9c4;
+            --muted:       #6e907c;
+            --dim:         #3d5e4a;
+            --danger:      #d94f4f;
+            --danger-dim:  rgba(217,79,79,0.15);
+            --warn:        #d4952a;
+            --r:           14px;
+            --r-sm:        10px;
+            --pad:         16px;
         }
-        h1 {
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
-        }
-        .container {
-            position: relative; /* Lisätty modal-painikkeelle */
-            background-color: #8B4513; /* Puunruskea */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 800px;
-        }
-        .player-list {
-            margin-bottom: 20px;
-        }
-        .player {
-            background-color: #556B2F; /* Tummanvihreä */
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* Vasen reuna */
-        }
-        .player.current {
-            border: 2px solid #FFD700; /* Kulta reunus currentille */
-        }
-        .player.out {
-            background-color: #A52A2A; /* Punainen, ulos */
-            text-decoration: line-through;
-        }
-        .player.finished {
-            background-color: #FFD700; /* Kultainen, valmis (sijoitus) */
-            font-weight: bold;
-        }
-        .player-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            font-weight: bold;
-            margin-bottom: 5px; /* Väliä historiaan */
-        }
-        .player-history {
-            font-size: 0.9em; /* Hieman pienempi fontti historialle */
-            word-wrap: break-word; /* Rivittää pitkät listat */
-        }
-        .remove-player {
-            background-color: #FF0000;
-            color: white;
-            border: none;
-            padding: 2px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8em;
-        }
-        .remove-player:hover {
-            background-color: #CC0000;
-        }
-        .player[draggable="true"] {
-            cursor: move;
-        }
-        .score-input {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        select, input, button {
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            border: none;
-            font-size: 1em;
-        }
-        button {
-            background-color: #32CD32; /* Limevihreä */
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #228B22;
-        }
-        #history {
-            margin-top: 20px;
-            background-color: rgba(255,255,255,0.2);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #add-player {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        #player-name {
-            flex-grow: 1;
-        }
-        /* Modal tyylit */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
+ 
+        html, body {
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            padding-top: 60px;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
-        .modal-content {
-            background-color: #556B2F; /* Tummanvihreä */
-            margin: 5% auto;
-            padding: 20px 20px 40px 20px; /* Pidetty padding alhaalla ilmavuuden vuoksi */
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 10px;
-            color: #FFF;
-            position: relative;
+ 
+        /* ──── SCREENS ──── */
+        .screen {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            transition: opacity .25s, transform .25s;
         }
-        .modal-content ul {
-            margin-bottom: 0; /* Poistettu ul-listan ala-marginaali */
+        .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(18px); }
+ 
+        /* ══════════════════════════════════════
+           SETUP SCREEN
+        ══════════════════════════════════════ */
+        #screen-setup { overflow-y: auto; }
+ 
+        .setup-header {
+            padding: 44px var(--pad) 20px;
+            text-align: center;
         }
-        .close {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
+        .logo-icon { font-size: 3.2em; line-height: 1; margin-bottom: 6px;
+                     filter: drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
+        .logo-title {
+            font-family: 'Fraunces', serif; font-size: 3em; font-weight: 900;
+            color: var(--gold); line-height: 1;
+            text-shadow: 0 4px 24px var(--gold-glow);
         }
-        .close:hover,
-        .close:focus {
-            color: white;
-            text-decoration: none;
+        .logo-sub { font-size: .85em; color: var(--muted); margin-top: 5px; letter-spacing: .1em; }
+ 
+        .setup-body { padding: 0 var(--pad) 110px; }
+ 
+        .section-label {
+            font-size: .7em; font-weight: 700; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
         }
-        #rules-button {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background-color: #32CD32;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+ 
+        .add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+ 
+        .text-input {
+            flex: 1; padding: 14px 16px;
+            background: var(--card); border: 2px solid transparent;
+            border-radius: var(--r-sm); color: var(--text);
+            font-family: 'Outfit', sans-serif; font-size: 1em;
+            outline: none; transition: border-color .2s;
         }
-        #rules-button:hover {
-            background-color: #228B22;
+        .text-input:focus { border-color: var(--green); }
+        .text-input::placeholder { color: var(--dim); }
+ 
+        .btn {
+            padding: 14px 18px; border: none;
+            border-radius: var(--r-sm); font-family: 'Outfit', sans-serif;
+            font-size: 1em; font-weight: 600; cursor: pointer;
+            transition: transform .1s; -webkit-tap-highlight-color: transparent;
         }
-        pre {
-            background-color: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 1em;
-            white-space: pre-wrap;
-            text-align: center; /* Keskitys diagrammille */
+        .btn:active { transform: scale(.94); }
+        .btn-green  { background: var(--green); color: var(--bg); }
+        .btn-ghost  { background: var(--card); color: var(--muted); }
+ 
+        /* Player setup list */
+        .setup-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .setup-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 13px 14px; background: var(--card);
+            border-radius: var(--r-sm);
         }
+        .setup-order {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: var(--surface); color: var(--muted);
+            font-size: .8em; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .setup-name { flex: 1; font-weight: 500; font-size: .95em; }
+        .setup-arrows { display: flex; flex-direction: column; gap: 2px; }
+        .arrow-btn {
+            background: var(--surface); border: none; color: var(--muted);
+            width: 28px; height: 24px; border-radius: 6px; font-size: .8em;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .arrow-btn:active { background: var(--card2); color: var(--text); }
+        .remove-btn {
+            background: none; border: none; color: var(--dim);
+            font-size: 1.1em; cursor: pointer; padding: 4px 6px;
+            border-radius: 6px; transition: color .15s;
+        }
+        .remove-btn:active { color: var(--danger); }
+ 
+        .start-wrap {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: var(--pad);
+            background: linear-gradient(transparent, var(--bg) 45%);
+        }
+        .btn-start {
+            width: 100%; padding: 18px;
+            background: linear-gradient(135deg, var(--gold) 0%, #b87218 100%);
+            border: none; border-radius: var(--r); color: var(--bg);
+            font-family: 'Outfit', sans-serif; font-size: 1.1em; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 28px var(--gold-glow);
+            transition: transform .1s, box-shadow .2s;
+        }
+        .btn-start:active { transform: scale(.98); }
+        .btn-start:disabled {
+            background: var(--card); color: var(--dim);
+            box-shadow: none; cursor: default;
+        }
+ 
+        /* ══════════════════════════════════════
+           GAME SCREEN
+        ══════════════════════════════════════ */
+        #screen-game { background: var(--bg); }
+ 
+        .game-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px var(--pad);
+            padding-top: max(10px, env(safe-area-inset-top));
+        }
+        .game-title {
+            font-family: 'Fraunces', serif; font-size: 1.25em;
+            font-weight: 700; color: var(--gold);
+        }
+        .hdr-btns { display: flex; gap: 8px; }
+        .icon-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--card); border: none; color: var(--muted);
+            font-size: 1em; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .15s;
+        }
+        .icon-btn:active { background: var(--card2); }
+ 
+        /* Hero card */
+        .hero {
+            margin: 0 var(--pad) 8px;
+            padding: 14px 16px 16px;
+            background: linear-gradient(135deg, var(--card) 0%, #1a3322 100%);
+            border-radius: var(--r);
+            border: 2px solid rgba(82,212,110,.25);
+            position: relative; overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, rgba(82,212,110,.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-label {
+            font-size: .68em; font-weight: 700; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--green); margin-bottom: 3px;
+        }
+        .hero-name {
+            font-family: 'Fraunces', serif; font-size: 1.9em; font-weight: 700;
+            color: var(--text); line-height: 1.1;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .hero-bottom { display: flex; align-items: flex-end; gap: 6px; margin-top: 8px; }
+        .hero-score { font-size: 2.6em; font-weight: 700; color: var(--gold); line-height: 1; }
+        .hero-max { font-size: .95em; color: var(--muted); padding-bottom: 4px; }
+        .hero-misses { margin-left: auto; display: flex; gap: 5px; align-items: center; padding-bottom: 6px; }
+        .miss-pip {
+            width: 11px; height: 11px; border-radius: 50%;
+            background: var(--dim); transition: background .3s;
+        }
+        .miss-pip.lit { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .progress-track {
+            margin-top: 10px; height: 6px; background: var(--surface);
+            border-radius: 3px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, var(--green), var(--gold));
+            transition: width .5s cubic-bezier(.25,1,.5,1);
+        }
+ 
+        /* Scoreboard */
+        .scoreboard {
+            flex: 1; overflow-y: auto; padding: 0 var(--pad) 6px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .pc {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 12px; background: var(--surface);
+            border-radius: var(--r-sm); border: 2px solid transparent;
+            transition: border-color .2s, background .2s;
+        }
+        .pc.active  { border-color: var(--green); background: var(--card); }
+        .pc.out     { background: rgba(100,20,20,.4); opacity: .6; }
+        .pc.done    { background: rgba(30,60,20,.5); border-color: var(--gold); }
+ 
+        .pc-sym { width: 26px; text-align: center; font-size: .9em; color: var(--muted); flex-shrink: 0; }
+        .pc-sym.cur { color: var(--green); font-size: 1em; }
+        .pc-sym.fin { color: var(--gold); }
+        .pc-name {
+            flex: 1; font-weight: 600; font-size: .9em;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .pc-name.cross { text-decoration: line-through; }
+        .pc-dots { display: flex; gap: 3px; align-items: center; flex-shrink: 0; }
+        .pc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); }
+        .pc-dot.on { background: var(--danger); }
+        .pc-bar-wrap { width: 52px; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+        .pc-bar-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width .4s ease; }
+        .pc-pts { font-weight: 700; font-size: 1em; color: var(--gold); min-width: 28px; text-align: right; flex-shrink: 0; }
+ 
+        /* ══════════════════════════════════════
+           SCORE PAD
+        ══════════════════════════════════════ */
+        .pad-wrap {
+            background: var(--surface);
+            border-radius: var(--r) var(--r) 0 0;
+            padding: 10px var(--pad);
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            box-shadow: 0 -6px 32px rgba(0,0,0,.45);
+        }
+        .pad-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 9px;
+        }
+        .pad-title {
+            font-size: .7em; font-weight: 700; letter-spacing: .13em;
+            text-transform: uppercase; color: var(--muted);
+        }
+        .undo-btn {
+            display: flex; align-items: center; gap: 5px;
+            padding: 7px 14px; background: var(--card); border: none;
+            border-radius: 20px; color: var(--muted);
+            font-family: 'Outfit', sans-serif; font-size: .82em; font-weight: 500;
+            cursor: pointer; transition: background .15s, color .15s, transform .1s;
+        }
+        .undo-btn:not(:disabled) { color: var(--text); background: var(--card2); }
+        .undo-btn:not(:disabled):active { transform: scale(.95); }
+        .undo-btn:disabled { opacity: .35; cursor: default; }
+ 
+        .num-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px; margin-bottom: 6px;
+        }
+        .num-btn {
+            height: 62px; border: none;
+            border-radius: var(--r-sm);
+            background: var(--card);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35em; font-weight: 700;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: transform .08s;
+        }
+        .num-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: var(--green); opacity: 0;
+            transition: opacity .25s;
+        }
+        .num-btn.tap::before { opacity: 1; }
+        .num-btn:active { transform: scale(.9); }
+ 
+        .miss-btn {
+            width: 100%; height: 52px; border: none;
+            border-radius: var(--r-sm);
+            background: var(--danger-dim);
+            border: 2px solid rgba(217,79,79,.3);
+            color: var(--danger);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1em; font-weight: 700;
+            cursor: pointer; letter-spacing: .04em;
+            transition: transform .08s, background .15s;
+        }
+        .miss-btn:active { transform: scale(.97); background: rgba(217,79,79,.28); }
+ 
+        /* ══════════════════════════════════════
+           TOAST
+        ══════════════════════════════════════ */
+        #toasts {
+            position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; gap: 7px;
+            z-index: 900; pointer-events: none;
+            width: calc(100% - 32px); max-width: 340px;
+        }
+        .toast {
+            padding: 11px 18px; border-radius: 24px;
+            font-weight: 600; font-size: .9em; text-align: center;
+            animation: tIn .3s cubic-bezier(.34,1.56,.64,1) both,
+                       tOut .3s ease 2.3s both;
+        }
+        .t-info    { background: var(--card2); color: var(--text); border: 1px solid var(--dim); }
+        .t-success { background: var(--green); color: var(--bg); }
+        .t-warn    { background: var(--warn); color: var(--bg); }
+        .t-danger  { background: var(--danger); color: #fff; }
+        @keyframes tIn  { from { opacity:0; transform:translateY(-14px) scale(.88); } to { opacity:1; transform:none; } }
+        @keyframes tOut { to   { opacity:0; } }
+ 
+        /* ══════════════════════════════════════
+           RULES BOTTOM SHEET
+        ══════════════════════════════════════ */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.65); z-index: 500;
+            backdrop-filter: blur(4px); align-items: flex-end;
+        }
+        .overlay.open { display: flex; }
+        .sheet {
+            width: 100%; max-height: 80vh;
+            background: var(--surface);
+            border-radius: var(--r) var(--r) 0 0;
+            padding: 16px var(--pad) max(20px, env(safe-area-inset-bottom));
+            overflow-y: auto;
+        }
+        .sheet-handle {
+            width: 38px; height: 4px; background: var(--dim);
+            border-radius: 2px; margin: 0 auto 18px;
+        }
+        .sheet-title {
+            font-family: 'Fraunces', serif; font-size: 1.45em;
+            font-weight: 700; color: var(--gold); margin-bottom: 14px;
+        }
+        .rules-body { color: var(--muted); font-size: .9em; line-height: 1.75; }
+        .rules-body p { margin-bottom: 9px; }
+        .rules-body strong { color: var(--text); }
+        .keila-grid {
+            font-family: monospace; background: var(--card);
+            padding: 12px; border-radius: var(--r-sm);
+            text-align: center; color: var(--text);
+            font-size: 1.05em; line-height: 2; letter-spacing: .18em;
+            margin: 10px 0;
+        }
+ 
+        /* ══════════════════════════════════════
+           GAME OVER SCREEN
+        ══════════════════════════════════════ */
+        #screen-gameover {
+            align-items: center; justify-content: center;
+            padding: var(--pad); overflow-y: auto;
+            background: var(--bg);
+        }
+        .go-icon {
+            font-size: 5em; margin-bottom: 10px;
+            animation: pop 1s cubic-bezier(.34,1.56,.64,1) both;
+        }
+        @keyframes pop { from { opacity:0; transform:scale(.2) rotate(-15deg); } }
+        .go-title {
+            font-family: 'Fraunces', serif; font-size: 2.4em;
+            font-weight: 900; color: var(--gold); text-align: center;
+        }
+        .go-sub { color: var(--muted); margin-bottom: 28px; margin-top: 4px; }
+        .podium { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; }
+        .podium-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 15px; background: var(--surface);
+            border-radius: var(--r-sm); border: 2px solid transparent;
+        }
+        .podium-row.p1 { border-color: var(--gold); background: rgba(232,160,32,.08); }
+        .podium-row.p2 { border-color: #aaa; }
+        .podium-row.p3 { border-color: #b87a40; }
+        .podium-row.pout { opacity: .5; }
+        .p-medal { font-size: 1.4em; width: 28px; text-align: center; flex-shrink: 0; }
+        .p-name  { flex: 1; font-weight: 600; }
+        .p-score { color: var(--gold); font-weight: 700; }
+        .btn-newgame {
+            width: 100%; max-width: 380px; padding: 17px;
+            background: linear-gradient(135deg, var(--gold), #b87218);
+            border: none; border-radius: var(--r); color: var(--bg);
+            font-family: 'Outfit', sans-serif; font-size: 1.1em; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 26px var(--gold-glow);
+            margin-bottom: 10px; transition: transform .1s;
+        }
+        .btn-newgame:active { transform: scale(.98); }
+        .btn-replay {
+            width: 100%; max-width: 380px; padding: 14px;
+            background: var(--card); border: none; border-radius: var(--r);
+            color: var(--muted); font-family: 'Outfit', sans-serif;
+            font-size: 1em; font-weight: 600; cursor: pointer;
+            transition: background .15s;
+        }
+        .btn-replay:active { background: var(--card2); }
+ 
+        /* Scrollbar */
+        .scoreboard::-webkit-scrollbar,
+        .sheet::-webkit-scrollbar { width: 3px; }
+        .scoreboard::-webkit-scrollbar-thumb,
+        .sheet::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
     </style>
 </head>
 <body>
-    <h1>Mölkkymatti</h1>
-    <div class="container">
-        <div id="add-player">
-            <input type="text" id="player-name" placeholder="Pelaajan nimi">
-            <button onclick="addPlayer()">Lisää pelaaja</button>
-        </div>
-        <div class="player-list" id="player-list"></div>
-        <div class="score-input" id="score-input" style="display:none;">
-            <span id="current-player">Vuoro: </span>
-            <select id="points">
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-            </select>
-            <button onclick="addScore()">Lisää pisteet</button>
-            <button onclick="undoLast()" id="undo-button">Peruuta viimeinen</button>
-        </div>
-        <div id="history"></div>
-        <button onclick="resetGame()" style="margin-top:20px;">Aloita alusta</button>
-        <button id="rules-button" onclick="openModal()">Pelin säännöt</button>
-    </div>
-
-    <!-- Modal -->
-    <div id="rules-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">×</span>
-            <h2>Mölkky-pelin säännöt</h2>
-            <ul>
-                <li>Järjestä numeroidut keilat tiiviiksi ryhmäksi 3,5 metrin päähän heittopaikasta seuraavassa järjestyksessä (rivit edestä taaksepäin, heittolinjaan nähden):<br>
-                    <pre>
-  7  9  8
-  5 11 12 6
-  3 10 4
-  1 2
-                    </pre>
-                </li>
-                <li>Pelaaja pyrkii kaatamaan numeroituja keiloja heittokeilalla.</li>
-                <li>Jos useita keiloja kaatuu, pelaajan pisteet ovat yhtä suuret kuin kaatuneiden keilojen määrä.</li>
-                <li>Yhden keilan kaataminen antaa sille merkityt pisteet.</li>
-                <li>Aseta kaatuneet keilat pystyyn sinne, minne ne putosivat, ja sitten on seuraavan pelaajan vuoro.</li>
-                <li>Virallisesti peli päättyy, kun ensimmäinen pelaaja saa tasan 50 pistettä, mutta Mölkkymattia voi käyttää myös pistelaskutavalla, jossa peli jatkuu, kunnes kaikki pelaajat paitsi viimeinen ovat saavuttaneet 50 pistettä. Jokainen, joka saa tasan 50, saa sijan (1., 2. jne.), ja viimeinen jäljellä oleva pelaaja saa viimeisen sijan automaattisesti.</li>
-                <li>Jos pelaaja ylittää 50 pistettä, hänen pistemääränsä vähenee 25 pisteeseen.</li>
-                <li>Jos pelaaja epäonnistuu kolmesti peräkkäin (ei kaada keiloja), hänen pelinsä päättyy.</li>
-            </ul>
+ 
+<!-- TOAST -->
+<div id="toasts"></div>
+ 
+<!-- RULES SHEET -->
+<div class="overlay" id="rules-overlay" onclick="overlayClose(event,'rules-overlay')">
+    <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">🎯 Mölkyn säännöt</div>
+        <div class="rules-body">
+            <p>Aseta keilat <strong>3,5 m</strong> päähän heittopaikasta:</p>
+            <div class="keila-grid">7 &nbsp; 9 &nbsp; 8<br>5 &nbsp;11 12 &nbsp;6<br>3 &nbsp;10 &nbsp; 4<br>1 &nbsp;&nbsp;&nbsp; 2</div>
+            <p>🎳 <strong>Useita keiloja kaatuu</strong> → pisteet = kaatuneiden <em>lukumäärä</em></p>
+            <p>🎯 <strong>Yksi keila kaatuu</strong> → pisteet = keilan <em>numero</em></p>
+            <p>📍 Kaatuneet keilat nostetaan pystyyn sinne, mihin ne kaatuivat</p>
+            <p>🏆 <strong>Tasan 50 pistettä</strong> → pelaaja sijoittuu (1., 2. jne.)</p>
+            <p>📉 <strong>Yli 50 pistettä</strong> → pisteet putoavat 25:een</p>
+            <p>💀 <strong>3 peräkkäistä ohitusta</strong> → pelaaja putoaa pois</p>
         </div>
     </div>
-
-    <script>
-        let players = [];
-        let currentTurn = 0;
-        let gameOver = false;
-        let rankCounter = 1;
-        let lastThrownTurn = -1;
-        let isUndoAvailable = false;
-
-        class Player {
-            constructor(name) {
-                this.name = name;
-                this.score = 0;
-                this.consecutiveMisses = 0;
-                this.history = [];
-                this.out = false;
-                this.finished = false;
-                this.rank = null;
-            }
-
-            addPoints(points) {
-                if (this.out || this.finished || gameOver) return;
-                this.history.push(points);
-                if (points === 0) {
-                    this.consecutiveMisses++;
-                    if (this.consecutiveMisses >= 3) {
-                        this.out = true;
-                        alert(`${this.name} on ulkona! Kolme peräkkäistä nollaa.`);
-                        return;
-                    }
-                } else {
-                    this.consecutiveMisses = 0;
-                }
-
-                let potential = this.score + points;
-                if (potential === 50) {
-                    this.score = 50;
-                    this.finished = true;
-                    this.rank = rankCounter++;
-                    alert(`${this.name} sijoittuu ${this.rank}. sijalle!`);
-                } else if (potential > 50) {
-                    this.score = 25;
-                    alert(`${this.name} ylitti 50! Pisteet pudotetaan 25:een.`);
-                } else {
-                    this.score = potential;
-                }
-            }
-
-            undoLast() {
-                if (this.history.length > 0) {
-                    const lastPoints = this.history.pop();
-                    this.score -= lastPoints;
-                    if (lastPoints === 0) {
-                        this.consecutiveMisses--;
-                    } else {
-                        this.consecutiveMisses = this.history.slice(-2).filter(p => p === 0).length;
-                    }
-                    if (this.finished) {
-                        this.finished = false;
-                        rankCounter--;
-                        this.rank = null;
-                    }
-                    this.out = false;
-                    gameOver = false;
-                }
-            }
-
-            reset() {
-                this.score = 0;
-                this.consecutiveMisses = 0;
-                this.history = [];
-                this.out = false;
-                this.finished = false;
-                this.rank = null;
-            }
-        }
-
-        function addPlayer() {
-            const name = document.getElementById('player-name').value.trim();
-            if (name) {
-                const exists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
-                if (exists) {
-                    alert('Pelaaja samalla nimellä on jo lisätty!');
-                    return;
-                }
-                players.push(new Player(name));
-                document.getElementById('player-name').value = '';
-                saveState();
-                renderPlayers();
-                if (players.length > 0) {
-                    document.getElementById('score-input').style.display = 'flex';
-                    setCurrentTurn(0);
-                }
-            }
-        }
-
-        function removePlayer(index) {
-            if (confirm(`Haluatko varmasti poistaa pelaajan ${players[index].name}?`)) {
-                players.splice(index, 1);
-                saveState();
-                if (players.length === 0) {
-                    document.getElementById('score-input').style.display = 'none';
-                } else if (currentTurn >= players.length) {
-                    currentTurn = 0;
-                }
-                renderPlayers();
-                setCurrentTurn(currentTurn);
-            }
-        }
-
-        function canReorder() {
-            return players.every(p => p.history.length === 0);
-        }
-
-        function renderPlayers() {
-            const list = document.getElementById('player-list');
-            list.innerHTML = '';
-            const reorderable = canReorder();
-            players.forEach((p, i) => {
-                const div = document.createElement('div');
-                div.className = 'player';
-                div.draggable = reorderable;
-                div.dataset.index = i;
-                if (i === currentTurn && !p.finished && !p.out) div.classList.add('current');
-                if (p.out) div.classList.add('out');
-                if (p.finished) div.classList.add('finished');
-                div.innerHTML = `<div class="player-info">
-                                    <span>${p.name}: ${p.score} pistettä (nollat: ${p.consecutiveMisses})${p.rank ? ' - ' + p.rank + '. sija' : ''}</span>
-                                    <button class="remove-player" onclick="removePlayer(${i})">X</button>
-                                 </div>
-                                 <div class="player-history">Historia: ${p.history.join(', ')}</div>`;
-                list.appendChild(div);
-            });
-            if (reorderable) {
-                addDragAndDropListeners();
-            }
-            document.getElementById('undo-button').disabled = !isUndoAvailable;
-        }
-
-        function addDragAndDropListeners() {
-            const list = document.getElementById('player-list');
-            list.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', e.target.dataset.index);
-                e.target.style.opacity = '0.5';
-            });
-            list.addEventListener('dragend', (e) => {
-                e.target.style.opacity = '1';
-            });
-            list.addEventListener('dragover', (e) => {
-                e.preventDefault();
-            });
-            list.addEventListener('drop', (e) => {
-                e.preventDefault();
-                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                const toIndex = Array.from(list.children).indexOf(e.target.closest('.player'));
-                if (fromIndex !== toIndex) {
-                    const [movedPlayer] = players.splice(fromIndex, 1);
-                    players.splice(toIndex, 0, movedPlayer);
-                    saveState();
-                    renderPlayers();
-                }
-            });
-        }
-
-        function addScore() {
-            if (gameOver) return;
-            const points = parseInt(document.getElementById('points').value);
-            if (isNaN(points) || points < 0 || points > 12) {
-                alert('Pisteet oltava 0-12!');
-                return;
-            }
-            isUndoAvailable = false; // Disable undo for previous, as new throw is added
-            players[currentTurn].addPoints(points);
-            lastThrownTurn = currentTurn;
-            isUndoAvailable = true;
-            renderPlayers();
-            checkEndGame();
-            saveState();
-            if (!gameOver) nextTurn();
-        }
-
-        function nextTurn() {
-            if (gameOver) return;
-            let attempts = 0;
-            do {
-                currentTurn = (currentTurn + 1) % players.length;
-                attempts++;
-                if (attempts > players.length) {
-                    // Kaikki out tai finished
-                    gameOver = true;
-                    return;
-                }
-            } while (players[currentTurn].out || players[currentTurn].finished);
-            setCurrentTurn(currentTurn);
-        }
-
-        function setCurrentTurn(turn) {
-            currentTurn = turn;
-            document.getElementById('current-player').innerHTML = `Vuoro: <strong>${players[currentTurn].name}</strong>`;
-            renderPlayers();
-        }
-
-        function checkEndGame() {
-            const activePlayers = players.filter(p => !p.out && !p.finished).length;
-            if (activePlayers <= 1) {
-                gameOver = true;
-                if (activePlayers === 1) {
-                    const lastPlayer = players.find(p => !p.out && !p.finished);
-                    lastPlayer.finished = true;
-                    lastPlayer.rank = rankCounter++;
-                    alert(`${lastPlayer.name} sijoittuu ${lastPlayer.rank}. sijalle (viimeisenä jäljellä olevana).`);
-                    renderPlayers();
-                }
-            }
-        }
-
-        function undoLast() {
-            if (!isUndoAvailable || lastThrownTurn === -1) return;
-            if (confirm('Haluatko peruuttaa viimeisen heiton?')) {
-                players[lastThrownTurn].undoLast();
-                currentTurn = lastThrownTurn;
-                isUndoAvailable = false;
-                saveState();
-                renderPlayers();
-            }
-        }
-
-        function resetGame() {
-            players.forEach(p => p.reset());
-            currentTurn = 0;
-            gameOver = false;
-            rankCounter = 1;
-            lastThrownTurn = -1;
-            isUndoAvailable = false;
-            document.getElementById('undo-button').disabled = true;
-            document.getElementById('history').innerHTML = '';
-            saveState();
-            if (players.length > 0) {
-                document.getElementById('score-input').style.display = 'flex';
-                setCurrentTurn(0);
+</div>
+ 
+<!-- ══ SETUP SCREEN ══ -->
+<div class="screen" id="screen-setup">
+    <div class="setup-header">
+        <div class="logo-icon">🌲</div>
+        <div class="logo-title">Mölkkymatti</div>
+        <div class="logo-sub">Pisteidenlaskija</div>
+    </div>
+ 
+    <div class="setup-body">
+        <div class="section-label">Lisää pelaajat</div>
+        <div class="add-row">
+            <input class="text-input" id="setup-input" type="text"
+                   placeholder="Pelaajan nimi…" autocomplete="off" autocorrect="off"
+                   onkeydown="if(event.key==='Enter') addPlayer()">
+            <button class="btn btn-green" onclick="addPlayer()">Lisää</button>
+        </div>
+ 
+        <div class="section-label" id="players-label" style="display:none">Pelausjärjestys</div>
+        <div class="setup-list" id="setup-list"></div>
+    </div>
+ 
+    <div class="start-wrap">
+        <button class="btn-start" id="btn-start" onclick="startGame()" disabled>
+            Aloita peli
+        </button>
+    </div>
+</div>
+ 
+<!-- ══ GAME SCREEN ══ -->
+<div class="screen hidden" id="screen-game">
+    <!-- Header -->
+    <div class="game-header">
+        <div class="game-title">Mölkky 🌲</div>
+        <div class="hdr-btns">
+            <button class="icon-btn" onclick="openRules()">📖</button>
+            <button class="icon-btn" onclick="promptReset()">🔄</button>
+        </div>
+    </div>
+ 
+    <!-- Hero -->
+    <div class="hero" id="hero">
+        <div class="hero-label">⚡ Vuorossa</div>
+        <div class="hero-name" id="hero-name">—</div>
+        <div class="hero-bottom">
+            <span class="hero-score" id="hero-score">0</span>
+            <span class="hero-max">/ 50</span>
+            <div class="hero-misses" id="hero-misses"></div>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="hero-bar" style="width:0%"></div>
+        </div>
+    </div>
+ 
+    <!-- Scoreboard -->
+    <div class="scoreboard" id="scoreboard"></div>
+ 
+    <!-- Score Pad -->
+    <div class="pad-wrap">
+        <div class="pad-top">
+            <div class="pad-title">Syötä pisteet</div>
+            <button class="undo-btn" id="undo-btn" onclick="undoLast()" disabled>
+                ↩ Peruuta
+            </button>
+        </div>
+        <div class="num-grid" id="num-grid"></div>
+        <button class="miss-btn" onclick="recordScore(0)">✗ &nbsp; OHITUS — 0 pistettä</button>
+    </div>
+</div>
+ 
+<!-- ══ GAME OVER SCREEN ══ -->
+<div class="screen hidden" id="screen-gameover">
+    <div class="go-icon">🏆</div>
+    <div class="go-title">Peli päättyi!</div>
+    <div class="go-sub" id="go-sub">Lopputulokset</div>
+    <div class="podium" id="podium"></div>
+    <button class="btn-newgame" onclick="goSetup()">Uusi peli</button>
+    <button class="btn-replay" onclick="playAgain()">Uusi kierros — samat pelaajat</button>
+</div>
+ 
+<script>
+/* ──────────────────────────────────────────────
+   STATE
+────────────────────────────────────────────── */
+let players         = [];
+let currentTurn     = 0;
+let gameOver        = false;
+let rankCounter     = 1;
+let lastThrownTurn  = -1;
+let isUndoAvailable = false;
+ 
+let setupNames = [];
+ 
+/* ──────────────────────────────────────────────
+   PLAYER CLASS
+────────────────────────────────────────────── */
+class Player {
+    constructor(name) {
+        this.name = name;
+        this.score = 0;
+        this.consecutiveMisses = 0;
+        this.history = [];
+        this.out = false;
+        this.finished = false;
+        this.rank = null;
+    }
+ 
+    addPoints(pts) {
+        if (this.out || this.finished) return;
+        this.history.push(pts);
+ 
+        if (pts === 0) {
+            this.consecutiveMisses++;
+            if (this.consecutiveMisses >= 3) {
+                this.out = true;
+                toast(`💀 ${this.name} putoaa — 3 ohitusta!`, 'danger');
             } else {
-                document.getElementById('score-input').style.display = 'none';
+                toast(`${this.name}: ohitus ${this.consecutiveMisses}/3`, 'warn');
             }
-            renderPlayers();
-        }
-
-        function saveState() {
-            const state = {
-                players: players.map(p => ({
-                    name: p.name,
-                    score: p.score,
-                    consecutiveMisses: p.consecutiveMisses,
-                    history: p.history,
-                    out: p.out,
-                    finished: p.finished,
-                    rank: p.rank
-                })),
-                currentTurn: currentTurn,
-                gameOver: gameOver,
-                rankCounter: rankCounter,
-                lastThrownTurn: lastThrownTurn,
-                isUndoAvailable: isUndoAvailable
-            };
-            localStorage.setItem('molkymattiState', JSON.stringify(state));
-        }
-
-        function loadState() {
-            const savedState = localStorage.getItem('molkymattiState');
-            if (savedState) {
-                const state = JSON.parse(savedState);
-                players = state.players.map(data => {
-                    const p = new Player(data.name);
-                    p.score = data.score;
-                    p.consecutiveMisses = data.consecutiveMisses;
-                    p.history = data.history;
-                    p.out = data.out;
-                    p.finished = data.finished;
-                    p.rank = data.rank;
-                    return p;
-                });
-                currentTurn = state.currentTurn;
-                gameOver = state.gameOver;
-                rankCounter = state.rankCounter;
-                lastThrownTurn = state.lastThrownTurn || -1;
-                isUndoAvailable = state.isUndoAvailable || false;
-                if (players.length > 0) {
-                    document.getElementById('score-input').style.display = 'flex';
-                    if (!gameOver) {
-                        nextTurn();
-                    }
-                    setCurrentTurn(currentTurn);
-                }
-                document.getElementById('undo-button').disabled = !isUndoAvailable;
-                renderPlayers();
+        } else {
+            this.consecutiveMisses = 0;
+            const potential = this.score + pts;
+            if (potential === 50) {
+                this.score = 50;
+                this.finished = true;
+                this.rank = rankCounter++;
+                const medals = ['🥇','🥈','🥉'];
+                toast(`${medals[this.rank-1] || this.rank+'.'} ${this.name} saavutti 50!`, 'success');
+            } else if (potential > 50) {
+                this.score = 25;
+                toast(`${this.name} ylitti 50 → pisteet 25:een`, 'warn');
+            } else {
+                this.score = potential;
+                toast(`+${pts} → ${this.name}: ${this.score} p`, 'info');
             }
         }
-
-        // Lataa tila sivun latauksen yhteydessä
-        window.onload = loadState;
-
-        // Modal-funktiot
-        function openModal() {
-            document.getElementById('rules-modal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('rules-modal').style.display = 'none';
-        }
-
-        // Sulje modal klikkaamalla ulkopuolelle
-        window.onclick = function(event) {
-            const modal = document.getElementById('rules-modal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
+    }
+ 
+    recalcFromHistory() {
+        let sc = 0, miss = 0;
+        this.out = false;
+        this.finished = false;
+        for (const pts of this.history) {
+            if (pts === 0) {
+                miss++;
+                if (miss >= 3) { this.out = true; break; }
+            } else {
+                miss = 0;
+                const p = sc + pts;
+                if (p === 50) { sc = 50; this.finished = true; break; }
+                else sc = p > 50 ? 25 : p;
             }
         }
-    </script>
+        this.score = sc;
+        // trailing zeros
+        let tail = 0;
+        for (let i = this.history.length - 1; i >= 0; i--) {
+            if (this.history[i] === 0) tail++;
+            else break;
+        }
+        this.consecutiveMisses = tail;
+    }
+ 
+    reset() {
+        this.score = 0; this.consecutiveMisses = 0;
+        this.history = []; this.out = false;
+        this.finished = false; this.rank = null;
+    }
+}
+ 
+/* ──────────────────────────────────────────────
+   SETUP
+────────────────────────────────────────────── */
+function addPlayer() {
+    const inp = document.getElementById('setup-input');
+    const name = inp.value.trim();
+    if (!name) return;
+    if (setupNames.some(n => n.toLowerCase() === name.toLowerCase())) {
+        toast('Tämä nimi on jo listalla!', 'warn'); return;
+    }
+    setupNames.push(name);
+    inp.value = ''; inp.focus();
+    renderSetup();
+}
+ 
+function removeSetupPlayer(i) {
+    setupNames.splice(i, 1);
+    renderSetup();
+}
+ 
+function movePlayer(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= setupNames.length) return;
+    [setupNames[i], setupNames[j]] = [setupNames[j], setupNames[i]];
+    renderSetup();
+}
+ 
+function renderSetup() {
+    const list = document.getElementById('setup-list');
+    const label = document.getElementById('players-label');
+    list.innerHTML = '';
+    label.style.display = setupNames.length ? '' : 'none';
+ 
+    setupNames.forEach((name, i) => {
+        const d = document.createElement('div');
+        d.className = 'setup-item';
+        d.innerHTML = `
+            <span class="setup-order">${i+1}</span>
+            <span class="setup-name">${esc(name)}</span>
+            <div class="setup-arrows">
+                <button class="arrow-btn" onclick="movePlayer(${i},-1)" ${i===0?'disabled':''}>▲</button>
+                <button class="arrow-btn" onclick="movePlayer(${i},1)" ${i===setupNames.length-1?'disabled':''}>▼</button>
+            </div>
+            <button class="remove-btn" onclick="removeSetupPlayer(${i})">✕</button>`;
+        list.appendChild(d);
+    });
+ 
+    document.getElementById('btn-start').disabled = setupNames.length < 1;
+}
+ 
+function startGame() {
+    if (setupNames.length < 1) return;
+    players = setupNames.map(n => new Player(n));
+    currentTurn = 0; gameOver = false; rankCounter = 1;
+    lastThrownTurn = -1; isUndoAvailable = false;
+    buildPad();
+    showScreen('game');
+    renderGame();
+    saveState();
+}
+ 
+/* ──────────────────────────────────────────────
+   NUMBER PAD
+────────────────────────────────────────────── */
+function buildPad() {
+    const grid = document.getElementById('num-grid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 12; i++) {
+        const b = document.createElement('button');
+        b.className = 'num-btn'; b.textContent = i;
+        b.onclick = () => recordScore(i);
+        grid.appendChild(b);
+    }
+}
+ 
+/* ──────────────────────────────────────────────
+   GAME LOGIC
+────────────────────────────────────────────── */
+function recordScore(pts) {
+    if (gameOver) return;
+    const p = players[currentTurn];
+    if (!p || p.out || p.finished) return;
+ 
+    // Visual flash on button
+    if (pts > 0) {
+        const btns = document.querySelectorAll('.num-btn');
+        const b = btns[pts - 1];
+        if (b) { b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 240); }
+    }
+ 
+    lastThrownTurn = currentTurn;
+    isUndoAvailable = false;
+    p.addPoints(pts);
+    isUndoAvailable = true;
+ 
+    renderGame();
+    checkEnd();
+    saveState();
+ 
+    if (!gameOver) {
+        // advance if player done or out
+        if (p.out || p.finished) nextTurn();
+        else nextTurn();
+        renderGame();
+    }
+}
+ 
+function nextTurn() {
+    if (gameOver) return;
+    let attempts = 0;
+    do {
+        currentTurn = (currentTurn + 1) % players.length;
+        if (++attempts > players.length) { gameOver = true; return; }
+    } while (players[currentTurn].out || players[currentTurn].finished);
+}
+ 
+function checkEnd() {
+    const active = players.filter(p => !p.out && !p.finished);
+    if (active.length <= 1) {
+        if (active.length === 1) {
+            active[0].finished = true;
+            active[0].rank = rankCounter++;
+        }
+        gameOver = true;
+        setTimeout(showGameOver, 700);
+    }
+}
+ 
+function undoLast() {
+    if (!isUndoAvailable || lastThrownTurn === -1) return;
+    const p = players[lastThrownTurn];
+    if (!p) return;
+ 
+    // Adjust rank counter if player just finished
+    if (p.finished) { rankCounter = Math.max(1, rankCounter - 1); p.finished = false; p.rank = null; }
+    if (p.out) { p.out = false; }
+ 
+    p.history.pop();
+    p.recalcFromHistory();
+    p.finished = false; p.rank = null; p.out = p.consecutiveMisses >= 3;
+ 
+    currentTurn = lastThrownTurn;
+    lastThrownTurn = -1;
+    isUndoAvailable = false;
+    gameOver = false;
+    toast('Viimeinen heitto peruutettu', 'info');
+    renderGame(); saveState();
+}
+ 
+function promptReset() {
+    if (confirm('Lopeta nykyinen peli ja palaa pelaajien valintaan?')) goSetup();
+}
+ 
+/* ──────────────────────────────────────────────
+   RENDER
+────────────────────────────────────────────── */
+function renderGame() {
+    const p = players[currentTurn];
+ 
+    // Hero
+    if (p) {
+        document.getElementById('hero-name').textContent = p.name;
+        document.getElementById('hero-score').textContent = p.score;
+        document.getElementById('hero-bar').style.width = `${(p.score / 50) * 100}%`;
+        const missDots = document.getElementById('hero-misses');
+        missDots.innerHTML = Array.from({length:3}, (_,i) =>
+            `<div class="miss-pip ${i < p.consecutiveMisses ? 'lit' : ''}"></div>`
+        ).join('');
+    }
+ 
+    // Sort: finished (by rank) → active (by score) → out
+    const sorted = players
+        .map((pl, idx) => ({pl, idx}))
+        .sort((a, b) => {
+            const pa = a.pl, pb = b.pl;
+            if (pa.finished && pb.finished) return pa.rank - pb.rank;
+            if (pa.finished) return -1; if (pb.finished) return 1;
+            if (pa.out && !pb.out) return 1; if (!pa.out && pb.out) return -1;
+            return pb.score - pa.score;
+        });
+ 
+    const board = document.getElementById('scoreboard');
+    board.innerHTML = '';
+    const medals = ['🥇','🥈','🥉'];
+ 
+    sorted.forEach(({pl, idx}) => {
+        const isCur = idx === currentTurn;
+        const d = document.createElement('div');
+        d.className = `pc${isCur?' active':''}${pl.out?' out':''}${pl.finished?' done':''}`;
+ 
+        let sym = '', symCls = 'pc-sym';
+        if (pl.finished) { sym = medals[pl.rank-1] || pl.rank+'.'; symCls += ' fin'; }
+        else if (pl.out) { sym = '💀'; }
+        else if (isCur) { sym = '▶'; symCls += ' cur'; }
+ 
+        const dots = Array.from({length:3}, (_,i) =>
+            `<div class="pc-dot${i < pl.consecutiveMisses ? ' on' : ''}"></div>`
+        ).join('');
+ 
+        d.innerHTML = `
+            <span class="${symCls}">${sym}</span>
+            <span class="pc-name${pl.out?' cross':''}">${esc(pl.name)}</span>
+            <div class="pc-dots">${dots}</div>
+            <div class="pc-bar-wrap"><div class="pc-bar-fill" style="width:${(pl.score/50)*100}%"></div></div>
+            <span class="pc-pts">${pl.score}</span>`;
+        board.appendChild(d);
+    });
+ 
+    document.getElementById('undo-btn').disabled = !isUndoAvailable;
+}
+ 
+/* ──────────────────────────────────────────────
+   GAME OVER
+────────────────────────────────────────────── */
+function showGameOver() {
+    renderPodium();
+    showScreen('gameover');
+    saveState();
+}
+ 
+function renderPodium() {
+    const sorted = [...players].sort((a, b) => {
+        if (a.rank && b.rank) return a.rank - b.rank;
+        if (a.rank) return -1; if (b.rank) return 1;
+        if (a.out && !b.out) return 1; if (!a.out && b.out) return -1;
+        return b.score - a.score;
+    });
+ 
+    const medals = ['🥇','🥈','🥉'];
+    const pod = document.getElementById('podium');
+    pod.innerHTML = '';
+    sorted.forEach(pl => {
+        const d = document.createElement('div');
+        const rc = pl.rank === 1 ? 'p1' : pl.rank === 2 ? 'p2' : pl.rank === 3 ? 'p3' : pl.out ? 'pout' : '';
+        d.className = `podium-row ${rc}`;
+        const icon = pl.out ? '💀' : (pl.rank ? (medals[pl.rank-1] || pl.rank+'.') : '—');
+        d.innerHTML = `
+            <span class="p-medal">${icon}</span>
+            <span class="p-name">${esc(pl.name)}</span>
+            <span class="p-score">${pl.score} p</span>`;
+        pod.appendChild(d);
+    });
+}
+ 
+function goSetup() {
+    setupNames = players.map(p => p.name);
+    players = []; gameOver = false; rankCounter = 1;
+    renderSetup();
+    showScreen('setup');
+    localStorage.removeItem('molkymattiState');
+}
+ 
+function playAgain() {
+    setupNames = players.map(p => p.name);
+    startGame();
+}
+ 
+/* ──────────────────────────────────────────────
+   SCREEN
+────────────────────────────────────────────── */
+function showScreen(name) {
+    ['setup','game','gameover'].forEach(s => {
+        document.getElementById(`screen-${s}`)
+            .classList.toggle('hidden', s !== name);
+    });
+}
+ 
+/* ──────────────────────────────────────────────
+   TOAST
+────────────────────────────────────────────── */
+function toast(msg, type = 'info') {
+    const map = {info:'t-info', success:'t-success', warn:'t-warn', danger:'t-danger'};
+    const el = document.createElement('div');
+    el.className = `toast ${map[type] || 't-info'}`;
+    el.textContent = msg;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => el.remove(), 2800);
+}
+ 
+/* ──────────────────────────────────────────────
+   RULES MODAL
+────────────────────────────────────────────── */
+function openRules() {
+    document.getElementById('rules-overlay').classList.add('open');
+}
+function overlayClose(e, id) {
+    if (e.target.id === id)
+        document.getElementById(id).classList.remove('open');
+}
+ 
+/* ──────────────────────────────────────────────
+   PERSIST
+────────────────────────────────────────────── */
+function saveState() {
+    localStorage.setItem('molkyState', JSON.stringify({
+        players: players.map(p => ({
+            name: p.name, score: p.score,
+            consecutiveMisses: p.consecutiveMisses,
+            history: p.history, out: p.out,
+            finished: p.finished, rank: p.rank
+        })),
+        currentTurn, gameOver, rankCounter,
+        lastThrownTurn, isUndoAvailable,
+        setupNames
+    }));
+}
+ 
+function loadState() {
+    const raw = localStorage.getItem('molkyState');
+    if (!raw) return;
+    try {
+        const s = JSON.parse(raw);
+        if (!s.players?.length) return;
+        players = s.players.map(d => {
+            const p = new Player(d.name);
+            Object.assign(p, d); return p;
+        });
+        currentTurn     = s.currentTurn ?? 0;
+        gameOver        = s.gameOver ?? false;
+        rankCounter     = s.rankCounter ?? 1;
+        lastThrownTurn  = s.lastThrownTurn ?? -1;
+        isUndoAvailable = s.isUndoAvailable ?? false;
+        setupNames      = s.setupNames ?? players.map(p => p.name);
+ 
+        buildPad();
+        renderSetup();
+ 
+        if (gameOver) { renderPodium(); showScreen('gameover'); }
+        else { showScreen('game'); renderGame(); }
+    } catch { localStorage.removeItem('molkyState'); }
+}
+ 
+function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+ 
+window.onload = loadState;
+</script>
 </body>
 </html>
